@@ -46,6 +46,13 @@ typedef NS_ENUM(NSInteger, EXUpdatesDevLauncherErrorCode) {
   }
 }
 
+- (void)reset
+{
+  EXUpdatesAppController *controller = EXUpdatesAppController.sharedInstance;
+  [controller setLauncher:nil];
+  [controller setIsStarted:NO];
+}
+
 - (NSURL *)launchAssetURL
 {
   return EXUpdatesAppController.sharedInstance.launchAssetUrl;
@@ -60,7 +67,7 @@ typedef NS_ENUM(NSInteger, EXUpdatesDevLauncherErrorCode) {
   EXUpdatesAppController *controller = EXUpdatesAppController.sharedInstance;
   EXUpdatesConfig *updatesConfiguration = [EXUpdatesConfig configWithExpoPlist];
   [updatesConfiguration loadConfigFromDictionary:configuration];
-  if (!updatesConfiguration.updateUrl) {
+  if (!updatesConfiguration.updateUrl || !updatesConfiguration.scopeKey) {
     errorBlock([NSError errorWithDomain:EXUpdatesDevLauncherControllerErrorDomain code:EXUpdatesDevLauncherErrorCodeInvalidUpdateURL userInfo:@{NSLocalizedDescriptionKey: @"Failed to load update: configuration object must include a valid update URL"}]);
     return;
   }
@@ -75,7 +82,6 @@ typedef NS_ENUM(NSInteger, EXUpdatesDevLauncherErrorCode) {
     return;
   }
 
-  [controller setIsStarted:YES];
   [self _setDevelopmentSelectionPolicy];
 
   EXUpdatesRemoteAppLoader *loader = [[EXUpdatesRemoteAppLoader alloc] initWithConfig:updatesConfiguration database:controller.database directory:controller.updatesDirectory completionQueue:controller.controllerQueue];
@@ -116,6 +122,7 @@ typedef NS_ENUM(NSInteger, EXUpdatesDevLauncherErrorCode) {
       return;
     }
 
+    [controller setIsStarted:YES];
     [controller setConfigurationInternal:configuration];
     [controller setLauncher:launcher];
     successBlock(launcher.launchedUpdate.rawManifest.rawManifestJSON);

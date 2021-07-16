@@ -4,6 +4,22 @@
 
 @implementation ABI41_0_0EXUpdatesNewRawManifest
 
+- (NSString *)rawId {
+  return [self.rawManifestJSON stringForKey:@"id"];
+}
+
+- (NSString *)stableLegacyId {
+  return self.rawId;
+}
+
+- (NSString *)scopeKey {
+  return self.rawId;
+}
+
+- (NSString *)projectId {
+  return self.rawId;
+}
+
 - (NSString *)createdAt {
   return [self.rawManifestJSON stringForKey:@"createdAt"];
 }
@@ -39,6 +55,24 @@
 
 - (NSString *)bundleUrl {
   return [self.launchAsset stringForKey:@"url"];
+}
+
+- (nullable NSDictionary *)extra {
+  return [self.rawManifestJSON nullableDictionaryForKey:@"extra"];
+}
+
+- (nullable NSDictionary *)expoClientConfigRootObject {
+  if (!self.extra) {
+    return nil;
+  }
+  return [self.extra nullableDictionaryForKey:@"expoClient"];
+}
+
+- (nullable NSDictionary *)expoGoConfigRootObject {
+  if (!self.extra) {
+    return nil;
+  }
+  return [self.extra nullableDictionaryForKey:@"expoGo"];
 }
 
 @end

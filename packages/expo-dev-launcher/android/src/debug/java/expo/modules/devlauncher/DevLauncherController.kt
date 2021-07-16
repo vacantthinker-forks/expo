@@ -78,6 +78,9 @@ class DevLauncherController private constructor(
       val manifestParser = DevLauncherManifestParser(httpClient, url)
       val appIntent = createAppIntent()
 
+      updatesInterface?.reset()
+      useDeveloperSupport = true
+
       val appLoader = if (!manifestParser.isManifestUrl()) {
         // It's (maybe) a raw React Native bundle
         DevLauncherReactNativeAppLoader(url, appHost, context)
@@ -131,6 +134,12 @@ class DevLauncherController private constructor(
     // App can be started from deep link.
     // That's why, we maybe need to initialized dev menu here.
     maybeInitDevMenuDelegate(context)
+    synchronized(this) {
+      appIsLoading = false
+    }
+  }
+
+  fun onAppLoadedWithError() {
     synchronized(this) {
       appIsLoading = false
     }
@@ -278,7 +287,7 @@ class DevLauncherController private constructor(
 
     @JvmStatic
     fun wasInitialized() = sInstance != null
-    
+
     @JvmStatic
     val instance: DevLauncherController
       get() = checkNotNull(sInstance) {

@@ -80,11 +80,10 @@ internal class DevLauncherManifestParserTest {
       MockResponse()
         .setResponseCode(501)
     )
-    val failure = Assert.assertThrows(IllegalArgumentException::class.java) {
+    val failure = Assert.assertThrows(Exception::class.java) {
       runBlocking { manifestParser.parseManifest() }
     }
 
     Truth.assertThat(failure).isNotNull()
   }
-
 }

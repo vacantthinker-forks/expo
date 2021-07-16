@@ -6,7 +6,21 @@
 
 ### 🎉 New features
 
+### 🐛 Bug fixes
+
+- Fixed Android notifications not respecting the `shouldPlaySound` property in `setNotificationHandler`. ([#13411](https://github.com/expo/expo/pull/13411) by [@cruzach](https://github.com/cruzach))
+- Force device ID to lowercase before sending to Expo's servers. (Only applicable if you're using `ExpoPushToken`s). ([#13409](https://github.com/expo/expo/pull/13409) by [@cruzach](https://github.com/cruzach))
+- Fixed plugin to not throw if the notification icon isn't set, and there's no notification icon present in the Android project. ([#13539](https://github.com/expo/expo/pull/13539) by [@cruzach](https://github.com/cruzach))
+
+### 💡 Others
+
+## 0.12.0 — 2021-06-16
+
+### 🎉 New features
+
 - [plugin] Refactor imports ([#13029](https://github.com/expo/expo/pull/13029) by [@EvanBacon](https://github.com/EvanBacon))
+- Add support for custom notification sounds when using EAS Build. ([#12782](https://github.com/expo/expo/pull/12782) by [@cruzach](https://github.com/cruzach))
+- Added ability to respond to remote notifications received while the app is backgrounded. ([#13130](https://github.com/expo/expo/pull/13130) by [@cruzach](https://github.com/cruzach))
 
 ### 🐛 Bug fixes
 

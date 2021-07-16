@@ -30,6 +30,10 @@ Because we no longer publish at build time, `postPublish` hooks in `app.json` wi
 
 Given that we no longer publish the app prior to builds, there is no update manifest available until the app has download an over-the-air update. Usually this means that at least for the first launch of the app you won't have some fields available. If you are using `Constants.manifest` to access update fields, in particular `Constants.manifest.releaseChannel`, you should switch to `Updates.releaseChannel` instead.
 
+### `Constants.appOwnership` will be `null` in the resulting standalone app
+
+The `Constants.appOwnership` field no longer exists in standalone apps produced by EAS Build. If you were previously testing the environment with something like `const isStandaloneApp = Constants.appOwnership === "standalone"` then you can invert the logic: `const isStandaloneApp = Constants.appOwnership !== "expo"`.
+
 ### All assets referenced in source code are bundled
 
 With classic builds, `assetBundlePatterns` serves two purposes:
@@ -52,6 +56,10 @@ If you use environment variables in your `app.config.js` or in your app source c
 ### Additional configuration is required to access private npm packages
 
 Learn more about how to securely store your `NPM_TOKEN` on EAS Build: ["How to use private package repositories"](/build-reference/how-tos.md#how-to-use-private-package-repositories).
+
+### `expo-branch` is not supported on EAS Build
+
+You will need to remove `expo-branch` from your app to build it with EAS Build. The plan is to add support to [react-native-branch](https://www.npmjs.com/package/react-native-branch), the library maintained by engineers at [Branch](https://branch.io/). If Branch support is a blocker for you, you can try to build your own [config plugin](https://docs.expo.io/guides/config-plugins/) to add react-native-branch to your app today.
 
 ### `metro.config.js` must export the entire default config from `@expo/metro-config`
 

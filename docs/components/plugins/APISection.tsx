@@ -3,6 +3,7 @@ import React, { useContext } from 'react';
 import DocumentationPageContext from '~/components/DocumentationPageContext';
 import { P } from '~/components/base/paragraph';
 import { GeneratedData } from '~/components/plugins/api/APIDataTypes';
+import APISectionComponents from '~/components/plugins/api/APISectionComponents';
 import APISectionConstants from '~/components/plugins/api/APISectionConstants';
 import APISectionEnums from '~/components/plugins/api/APISectionEnums';
 import APISectionInterfaces from '~/components/plugins/api/APISectionInterfaces';
@@ -46,12 +47,23 @@ const renderAPI = (
     const types = filterDataByKind(
       data,
       TypeDocKind.TypeAlias,
-      entry => !!(entry.type.declaration || entry.type.types)
+      entry =>
+        !entry.name.includes('Props') &&
+        !!(
+          entry.type.declaration ||
+          entry.type.types ||
+          entry.type.type ||
+          entry.type.typeArguments
+        )
     );
+
     const props = filterDataByKind(
       data,
       TypeDocKind.TypeAlias,
-      entry => entry.name.includes('Props') && !!entry.type.types
+      entry =>
+        entry.name.includes('Props') &&
+        (!!entry.type.types || // inheritance
+          !!entry.type.declaration?.children) // no inheritance
     );
     const defaultProps = filterDataByKind(
       data
@@ -61,12 +73,28 @@ const renderAPI = (
       TypeDocKind.Property,
       entry => entry.name === 'defaultProps'
     )[0];
+
     const enums = filterDataByKind(data, TypeDocKind.Enum);
     const interfaces = filterDataByKind(data, TypeDocKind.Interface);
-    const constants = filterDataByKind(data, TypeDocKind.Variable, entry => entry.flags.isConst);
+    const constants = filterDataByKind(
+      data,
+      TypeDocKind.Variable,
+      entry => (entry?.flags?.isConst || false) && entry?.type?.name !== 'React.FC'
+    );
+
+    const components = filterDataByKind(
+      data,
+      TypeDocKind.Variable,
+      entry => entry?.type?.name === 'React.FC'
+    );
+    const componentsPropNames = components.map(component => `${component.name}Props`);
+    const componentsProps = filterDataByKind(props, TypeDocKind.TypeAlias, entry =>
+      componentsPropNames.includes(entry.name)
+    );
 
     return (
       <>
+        <APISectionComponents data={components} componentsProps={componentsProps} />
         <APISectionConstants data={constants} apiName={apiName} />
         <APISectionMethods data={methods} apiName={apiName} />
         <APISectionMethods
@@ -74,7 +102,9 @@ const renderAPI = (
           apiName={apiName}
           header="Event Subscriptions"
         />
-        <APISectionProps data={props} defaultProps={defaultProps} />
+        {props && !componentsProps.length ? (
+          <APISectionProps data={props} defaultProps={defaultProps} />
+        ) : null}
         <APISectionTypes data={types} />
         <APISectionInterfaces data={interfaces} />
         <APISectionEnums data={enums} />

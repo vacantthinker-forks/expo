@@ -25,27 +25,21 @@ export type CommentTagData = {
 };
 
 export type TypeDefinitionData = {
-  name: string;
+  name?: string;
   type: string;
-  types?: TypeDefinitionTypesData[];
+  types?: TypeDefinitionData[];
+  elements?: TypeDefinitionData[];
   elementType?: {
     name: string;
     type: string;
   };
   queryType?: {
     name: string;
+    type: string;
   };
   typeArguments?: TypeDefinitionData[];
   declaration?: TypeDeclarationContentData;
-};
-
-export type TypeDefinitionTypesData = {
-  type: string;
-  name?: string;
-  value?: string | null;
-  elementType?: {
-    name: string;
-  };
+  value?: string | boolean | null;
 };
 
 export type MethodParamData = {
@@ -62,7 +56,7 @@ export type TypePropertyDataFlags = {
 
 export type ConstantDefinitionData = {
   name: string;
-  flags: {
+  flags?: {
     isConst: boolean;
   };
   comment?: CommentData;
@@ -120,9 +114,7 @@ export type MethodSignatureData = {
 
 export type PropsDefinitionData = {
   name: string;
-  type: {
-    types: TypeDeclarationData[];
-  };
+  type: TypeDefinitionData;
   kind: TypeDocKind;
 };
 
@@ -131,11 +123,12 @@ export type PropData = {
   comment: CommentData;
   type: TypeDefinitionData;
   flags?: TypePropertyDataFlags;
+  defaultValue?: string;
 };
 
 export type DefaultPropsDefinitionData = {
   name: string;
-  type: TypeDeclarationData;
+  type: TypeDefinitionData;
   kind: TypeDocKind;
 };
 
@@ -144,38 +137,16 @@ export type DefaultPropsDefinitionData = {
 export type TypeGeneralData = {
   name: string;
   comment: CommentData;
-  type: TypeDeclarationData;
+  type: TypeDefinitionData;
   kind: TypeDocKind;
 };
 
 export type TypeDeclarationContentData = {
   signatures: TypeSignaturesData[];
-  children: TypePropertyData[];
-};
-
-export type TypeDeclarationData = {
-  declaration?: TypeDeclarationContentData;
-  type: string;
-  types: TypeValueData[];
-  typeArguments?: TypeDefinitionData[];
+  children?: PropData[];
 };
 
 export type TypeSignaturesData = {
-  parameters: MethodParamData[];
+  parameters?: MethodParamData[];
   type: TypeDefinitionData;
-};
-
-export type TypePropertyData = {
-  name: string;
-  flags?: TypePropertyDataFlags;
-  comment: CommentData;
-  type: TypeDefinitionData;
-  defaultValue: string;
-};
-
-export type TypeValueData = {
-  type: string;
-  value?: string | boolean | null;
-  name?: string;
-  declaration?: TypeDeclarationContentData;
 };

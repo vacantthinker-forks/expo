@@ -35,7 +35,6 @@ public class UpdatesDevLauncherController implements UpdatesInterface {
       sInstance = new UpdatesDevLauncherController();
     }
     UpdatesController.initializeWithoutStarting(context);
-    setDevelopmentSelectionPolicy();
     return getInstance();
   }
 
@@ -51,12 +50,18 @@ public class UpdatesDevLauncherController implements UpdatesInterface {
   }
 
   @Override
+  public void reset() {
+    UpdatesController controller = UpdatesController.getInstance();
+    controller.setLauncher(null);
+  }
+
+  @Override
   public void fetchUpdateWithConfiguration(HashMap<String, Object> configuration, Context context, UpdateCallback callback) {
     UpdatesController controller = UpdatesController.getInstance();
     UpdatesConfiguration updatesConfiguration = new UpdatesConfiguration()
             .loadValuesFromMetadata(context)
             .loadValuesFromMap(configuration);
-    if (updatesConfiguration.getUpdateUrl() == null) {
+    if (updatesConfiguration.getUpdateUrl() == null || updatesConfiguration.getScopeKey() == null) {
       callback.onFailure(new Exception("Failed to load update: UpdatesConfiguration object must include a valid update URL"));
       return;
     }
@@ -64,6 +69,8 @@ public class UpdatesDevLauncherController implements UpdatesInterface {
       callback.onFailure(controller.getUpdatesDirectoryException());
       return;
     }
+
+    setDevelopmentSelectionPolicy();
 
     DatabaseHolder databaseHolder = controller.getDatabaseHolder();
     RemoteLoader loader = new RemoteLoader(context, updatesConfiguration, databaseHolder.getDatabase(), controller.getFileDownloader(), controller.getUpdatesDirectory());

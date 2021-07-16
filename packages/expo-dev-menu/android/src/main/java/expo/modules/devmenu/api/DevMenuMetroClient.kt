@@ -2,11 +2,9 @@ package expo.modules.devmenu.api
 
 import android.net.Uri
 import expo.modules.devmenu.helpers.await
-import expo.modules.devmenu.helpers.fetch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
-
 
 class DevMenuMetroClient {
   private val httpClient = OkHttpClient()
@@ -20,7 +18,11 @@ class DevMenuMetroClient {
       .get()
       .url(url.toString())
       .build()
-    return request.await(httpClient).isSuccessful
+    return try {
+      request.await(httpClient).isSuccessful
+    } catch (e: Exception) {
+      false
+    }
   }
 
   suspend fun openJSInspector(metroHost: String, applicationId: String) {

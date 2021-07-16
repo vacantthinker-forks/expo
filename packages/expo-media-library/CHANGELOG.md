@@ -6,6 +6,14 @@
 
 ### 🎉 New features
 
+- Added `isAvailableAsync` method ([#13418](https://github.com/expo/expo/pull/13418) by [@danielmark0116](https://github.com/danielmark0116))
+
+### 🐛 Bug fixes
+
+### 💡 Others
+
+## 12.1.0 — 2021-06-16
+
 ### 🐛 Bug fixes
 
 - Enable kotlin in all modules. ([#12716](https://github.com/expo/expo/pull/12716) by [@wschurman](https://github.com/wschurman))

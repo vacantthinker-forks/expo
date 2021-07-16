@@ -63,7 +63,7 @@ const sections = [
     name: 'Reference',
     reference: [
       'Migrating from "expo build"',
-      'Integrating with JavaScript tooling',
+      'Integrating with third-party tooling',
       'Environment variables and secrets',
       'Server infrastructure',
       'Caching dependencies',
@@ -94,8 +94,8 @@ const sections = [
     reference: [
       'Introduction',
       'Getting Started',
-      'Installation',
-      'Building With EAS',
+      'Installation in React Native and Bare workflow projects',
+      'Building with EAS',
       'Extending the Development Menu',
     ],
   },
@@ -489,17 +489,17 @@ const sortedReference = Object.assign(
 const sortedGeneral = groupNav(sortNav(prevaledNavigationData.general));
 const sortedStarting = groupNav(sortNav(prevaledNavigationData.starting));
 const sortedPreview = groupNav(sortNav(prevaledNavigationData.preview));
-const sortedEas = groupNav(sortNav(prevaledNavigationData.eas));
+const sortedFeaturePreview = groupNav(sortNav(prevaledNavigationData.featurePreview));
 
 module.exports = {
   generalDirectories: prevaledNavigationData.generalDirectories,
   startingDirectories: prevaledNavigationData.startingDirectories,
   previewDirectories: prevaledNavigationData.previewDirectories,
-  easDirectories: prevaledNavigationData.easDirectories,
+  featurePreviewDirectories: prevaledNavigationData.featurePreviewDirectories,
   starting: sortedStarting,
   general: sortedGeneral,
   preview: sortedPreview,
-  eas: sortedEas,
+  featurePreview: sortedFeaturePreview,
   reference: { ...sortedReference, latest: sortedReference['v' + packageVersion] },
   hiddenSections,
 };

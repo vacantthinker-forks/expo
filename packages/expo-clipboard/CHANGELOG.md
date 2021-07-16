@@ -6,6 +6,17 @@
 
 ### 🎉 New features
 
+### 🐛 Bug fixes
+
+### 💡 Others
+
+- Clean up Android code. ([#13517](https://github.com/expo/expo/pull/13517) by [@mstach60161](https://github.com/mstach60161))
+([#13517](https://github.com/expo/expo/pull/13517) by [@mstach60161](https://github.com/mstach60161))
+
+## 1.1.0 — 2021-06-16
+
+### 🎉 New features
+
 - Added Clipboard event listener ([#13050](https://github.com/expo/expo/pull/13050) by [@cruzach](https://github.com/cruzach))
 
 ### 🐛 Bug fixes

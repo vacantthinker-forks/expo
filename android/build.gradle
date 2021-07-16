@@ -32,7 +32,7 @@ buildscript {
 }
 
 plugins {
-  id "com.diffplug.spotless" version "5.12.1"
+  id "com.diffplug.spotless" version "5.14.1"
 }
 
 allprojects {
@@ -42,6 +42,9 @@ allprojects {
       url "$rootDir/maven"
     }
     // For old expoviews to work
+    maven {
+      url "$rootDir/versioned-abis/expoview-abi42_0_0/maven"
+    }
     maven {
       url "$rootDir/versioned-abis/expoview-abi41_0_0/maven"
     }

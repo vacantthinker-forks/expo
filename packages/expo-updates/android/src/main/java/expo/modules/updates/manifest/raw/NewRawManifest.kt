@@ -1,5 +1,9 @@
 package expo.modules.updates.manifest.raw
 
+import android.net.Uri
+import android.util.Log
+import expo.modules.updates.db.entity.AssetEntity
+import expo.modules.updates.manifest.NewManifest
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -7,6 +11,31 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class NewRawManifest(json: JSONObject) : RawManifest(json) {
+  /**
+   * An ID representing this manifest, not the ID for the experience.
+   */
+  @Throws(JSONException::class)
+  fun getID(): String = json.getString("id")
+
+  /**
+   * Incorrect for now until we figure out how to get this in the new manifest format.
+   */
+  @Throws(JSONException::class)
+  override fun getStableLegacyID(): String = getID()
+
+  /**
+   * Incorrect for now until we figure out how to get this in the new manifest format.
+   */
+  @Throws(JSONException::class)
+  override fun getScopeKey(): String = getID()
+
+  /**
+   * Incorrect for now until we figure out how to get this in the new manifest format.
+   */
+  override fun getProjectID(): String? {
+    return null
+  }
+
   @Throws(JSONException::class)
   fun getRuntimeVersion(): String = json.getString("runtimeVersion")
 
@@ -36,4 +65,23 @@ class NewRawManifest(json: JSONObject) : RawManifest(json) {
 
   @Throws(JSONException::class)
   fun getCreatedAt(): String = json.getString("createdAt")
+
+  override fun getExpoGoConfigRootObject(): JSONObject? {
+    return getExtra()?.optJSONObject("expoGo")
+  }
+
+  override fun getExpoClientConfigRootObject(): JSONObject? {
+    return getExtra()?.optJSONObject("expoClient")
+  }
+
+  override fun getSlug(): String? = null
+  override fun getAppKey(): String? = null
+
+  override fun getSortTime(): String {
+    return getCreatedAt()
+  }
+
+  private fun getExtra(): JSONObject? {
+    return json.optJSONObject("extra")
+  }
 }

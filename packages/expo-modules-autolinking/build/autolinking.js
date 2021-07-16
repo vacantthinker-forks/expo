@@ -9,8 +9,9 @@ const fast_glob_1 = __importDefault(require("fast-glob"));
 const find_up_1 = __importDefault(require("find-up"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-// TODO: Rename to `expo-module.json`
-const EXPO_MODULE_CONFIG_FILENAME = 'unimodule.json';
+const ExpoModuleConfig_1 = require("./ExpoModuleConfig");
+// Names of the config files. From lowest to highest priority.
+const EXPO_MODULE_CONFIG_FILENAMES = ['unimodule.json', 'expo-module.config.json'];
 /**
  * Resolves autolinking search paths. If none is provided, it accumulates all node_modules when
  * going up through the path components. This makes workspaces work out-of-the-box without any configs.
@@ -25,7 +26,8 @@ exports.resolveSearchPathsAsync = resolveSearchPathsAsync;
  * Finds project's package.json and returns its path.
  */
 async function findPackageJsonPathAsync() {
-    return (await find_up_1.default('package.json', { cwd: process.cwd() })) ?? null;
+    var _a;
+    return (_a = (await find_up_1.default('package.json', { cwd: process.cwd() }))) !== null && _a !== void 0 ? _a : null;
 }
 exports.findPackageJsonPathAsync = findPackageJsonPathAsync;
 /**
@@ -46,17 +48,28 @@ exports.findDefaultPathsAsync = findDefaultPathsAsync;
  * Searches for modules to link based on given config.
  */
 async function findModulesAsync(providedOptions) {
+    var _a, _b, _c;
     const options = await mergeLinkingOptionsAsync(providedOptions);
     const results = {};
     for (const searchPath of options.searchPaths) {
-        const paths = await fast_glob_1.default([`*/${EXPO_MODULE_CONFIG_FILENAME}`, `@*/*/${EXPO_MODULE_CONFIG_FILENAME}`], {
+        const bracedFilenames = '{' + EXPO_MODULE_CONFIG_FILENAMES.join(',') + '}';
+        const paths = await fast_glob_1.default([`*/${bracedFilenames}`, `@*/*/${bracedFilenames}`], {
             cwd: searchPath,
         });
-        for (const packageConfigPath of paths) {
+        // If the package has multiple configs (e.g. `unimodule.json` and `expo-module.config.json` during the transition time)
+        // then we want to give `expo-module.config.json` the priority.
+        const uniqueConfigPaths = Object.values(paths.reduce((acc, configPath) => {
+            const dirname = path_1.default.dirname(configPath);
+            if (!acc[dirname] || configPriority(configPath) > configPriority(acc[dirname])) {
+                acc[dirname] = configPath;
+            }
+            return acc;
+        }, {}));
+        for (const packageConfigPath of uniqueConfigPaths) {
             const packagePath = await fs_extra_1.default.realpath(path_1.default.join(searchPath, path_1.default.dirname(packageConfigPath)));
-            const packageConfig = require(path_1.default.join(packagePath, EXPO_MODULE_CONFIG_FILENAME));
+            const expoModuleConfig = ExpoModuleConfig_1.requireAndResolveExpoModuleConfig(path_1.default.join(packagePath, path_1.default.basename(packageConfigPath)));
             const { name, version } = require(path_1.default.join(packagePath, 'package.json'));
-            if (options.exclude?.includes(name) || !packageConfig.platforms?.includes(options.platform)) {
+            if (((_a = options.exclude) === null || _a === void 0 ? void 0 : _a.includes(name)) || !expoModuleConfig.supportsPlatform(options.platform)) {
                 continue;
             }
             const currentRevision = {
@@ -65,12 +78,15 @@ async function findModulesAsync(providedOptions) {
             };
             if (!results[name]) {
                 // The revision that was found first will be the main one.
-                // An array of duplicates is needed only here.
-                results[name] = { ...currentRevision, duplicates: [] };
+                // An array of duplicates and the config are needed only here.
+                results[name] = {
+                    ...currentRevision,
+                    config: expoModuleConfig,
+                    duplicates: [],
+                };
             }
-            else if (results[name].path !== packagePath &&
-                results[name].duplicates?.every(({ path }) => path !== packagePath)) {
-                results[name].duplicates?.push(currentRevision);
+            else if (results[name].path !== packagePath && ((_b = results[name].duplicates) === null || _b === void 0 ? void 0 : _b.every(({ path }) => path !== packagePath))) {
+                (_c = results[name].duplicates) === null || _c === void 0 ? void 0 : _c.push(currentRevision);
             }
         }
     }
@@ -84,10 +100,11 @@ exports.findModulesAsync = findModulesAsync;
  * - options provided to the CLI command
  */
 async function mergeLinkingOptionsAsync(providedOptions) {
+    var _a;
     const packageJsonPath = await findPackageJsonPathAsync();
     const packageJson = packageJsonPath ? require(packageJsonPath) : {};
-    const baseOptions = packageJson.expo?.autolinking;
-    const platformOptions = providedOptions.platform && baseOptions?.[providedOptions.platform];
+    const baseOptions = (_a = packageJson.expo) === null || _a === void 0 ? void 0 : _a.autolinking;
+    const platformOptions = providedOptions.platform && (baseOptions === null || baseOptions === void 0 ? void 0 : baseOptions[providedOptions.platform]);
     const finalOptions = Object.assign({}, baseOptions, platformOptions, providedOptions);
     // Makes provided paths absolute or falls back to default paths if none was provided.
     finalOptions.searchPaths = await resolveSearchPathsAsync(finalOptions.searchPaths, process.cwd());
@@ -98,12 +115,13 @@ exports.mergeLinkingOptionsAsync = mergeLinkingOptionsAsync;
  * Verifies the search results by checking whether there are no duplicates.
  */
 function verifySearchResults(searchResults) {
+    var _a;
     const cwd = process.cwd();
     const relativePath = pkg => path_1.default.relative(cwd, pkg.path);
     let counter = 0;
     for (const moduleName in searchResults) {
         const revision = searchResults[moduleName];
-        if (revision.duplicates?.length) {
+        if ((_a = revision.duplicates) === null || _a === void 0 ? void 0 : _a.length) {
             console.warn(`⚠️  Found multiple revisions of ${chalk_1.default.green(moduleName)}`);
             console.log(` - ${chalk_1.default.magenta(relativePath(revision))} (${chalk_1.default.cyan(revision.version)})`);
             for (const duplicate of revision.duplicates) {
@@ -151,4 +169,10 @@ async function generatePackageListAsync(modules, options) {
     }
 }
 exports.generatePackageListAsync = generatePackageListAsync;
+/**
+ * Returns the priority of the config at given path. Higher number means higher priority.
+ */
+function configPriority(fullpath) {
+    return EXPO_MODULE_CONFIG_FILENAMES.indexOf(path_1.default.basename(fullpath));
+}
 //# sourceMappingURL=autolinking.js.map

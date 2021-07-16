@@ -7,6 +7,7 @@
 #import <EXUpdates/EXUpdatesReaper.h>
 #import <EXUpdates/EXUpdatesSelectionPolicyFactory.h>
 #import <EXUpdates/EXUpdatesUtils.h>
+#import <React/RCTReloadCommand.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,7 +20,7 @@ static NSString * const EXUpdatesErrorEventName = @"error";
 @interface EXUpdatesAppController ()
 
 @property (nonatomic, readwrite, strong) EXUpdatesConfig *config;
-@property (nonatomic, readwrite, strong) id<EXUpdatesAppLauncher> launcher;
+@property (nonatomic, readwrite, strong, nullable) id<EXUpdatesAppLauncher> launcher;
 @property (nonatomic, readwrite, strong) EXUpdatesDatabase *database;
 @property (nonatomic, readwrite, strong) EXUpdatesSelectionPolicy *selectionPolicy;
 @property (nonatomic, readwrite, strong) EXUpdatesSelectionPolicy *defaultSelectionPolicy;
@@ -113,6 +114,11 @@ static NSString * const EXUpdatesErrorEventName = @"error";
                                    reason:@"expo-updates is enabled, but no valid URL is configured under EXUpdatesURL. If you are making a release build for the first time, make sure you have run `expo publish` at least once."
                                  userInfo:@{}];
   }
+  if (!_config.scopeKey) {
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:@"expo-updates was configured with no scope key. Make sure a valid URL is configured under EXUpdatesURL."
+                                 userInfo:@{}];
+  }
 
   _isStarted = YES;
 
@@ -167,24 +173,20 @@ static NSString * const EXUpdatesErrorEventName = @"error";
 
 - (void)requestRelaunchWithCompletion:(EXUpdatesAppRelaunchCompletionBlock)completion
 {
-  if (_bridge) {
-    EXUpdatesAppLauncherWithDatabase *launcher = [[EXUpdatesAppLauncherWithDatabase alloc] initWithConfig:_config database:_database directory:_updatesDirectory completionQueue:_controllerQueue];
-    _candidateLauncher = launcher;
-    [launcher launchUpdateWithSelectionPolicy:self.selectionPolicy completion:^(NSError * _Nullable error, BOOL success) {
-      if (success) {
-        self->_launcher = self->_candidateLauncher;
-        completion(YES);
-        [self->_bridge reload];
-        [self runReaper];
-      } else {
-        NSLog(@"Failed to relaunch: %@", error.localizedDescription);
-        completion(NO);
-      }
-    }];
-  } else {
-    NSLog(@"EXUpdatesAppController: Failed to reload because bridge was nil. Did you set the bridge property on the controller singleton?");
-    completion(NO);
-  }
+  EXUpdatesAppLauncherWithDatabase *launcher = [[EXUpdatesAppLauncherWithDatabase alloc] initWithConfig:_config database:_database directory:_updatesDirectory completionQueue:_controllerQueue];
+  _candidateLauncher = launcher;
+  [launcher launchUpdateWithSelectionPolicy:self.selectionPolicy completion:^(NSError * _Nullable error, BOOL success) {
+    if (success) {
+      self->_launcher = self->_candidateLauncher;
+      completion(YES);
+      RCTReloadCommandSetBundleURL(launcher.launchAssetUrl);
+      RCTTriggerReloadCommandListeners(@"Requested by JavaScript - Updates.reloadAsync()");
+      [self runReaper];
+    } else {
+      NSLog(@"Failed to relaunch: %@", error.localizedDescription);
+      completion(NO);
+    }
+  }];
 }
 
 - (nullable EXUpdatesUpdate *)launchedUpdate
@@ -279,7 +281,7 @@ static NSString * const EXUpdatesErrorEventName = @"error";
   _defaultSelectionPolicy = selectionPolicy;
 }
 
-- (void)setLauncher:(id<EXUpdatesAppLauncher>)launcher
+- (void)setLauncher:(nullable id<EXUpdatesAppLauncher>)launcher
 {
   _launcher = launcher;
 }
